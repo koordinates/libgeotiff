@@ -10,6 +10,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 PROJECT(GeoTIFF)
 
 include(GNUInstallDirs)
+include(CPack)
 
 SET(GEOTIFF_LIB_NAME geotiff)
 SET(GEOTIFF_LIBRARY_TARGET geotiff_library)

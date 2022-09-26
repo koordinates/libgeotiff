@@ -1,0 +1,56 @@
+---
+steps:
+  - label: ':debian: amd64/bionic: Build & Package'
+    command: .buildkite/build.sh bionic
+    agents:
+      queue: "default"
+    artifact_paths:
+      - "build-bionic/*"
+
+  - label: ':debian: arm64/focal: Build & Package'
+    command: .buildkite/build.sh focal
+    agents:
+      queue: "default_arm64"
+    artifact_paths:
+      - "build-focal/*"
+
+  - label: ':debian: amd64/focal: Build & Package'
+    command: .buildkite/build.sh focal
+    agents:
+      queue: "default"
+    artifact_paths:
+      - "build-focal/*"
+
+  - block: "Release?"
+    prompt: "Release to archive?"
+
+  - label: ':debian: Publish debs'
+    command:
+      - >
+        aptly-upload
+        --aptly-url https://apt-repo.kx.gd
+        --retries 3
+        --repo kx-builds-focal
+        --series focal
+        build-focal/*.deb
+      - >
+        aptly-upload
+        --aptly-url https://apt-repo.kx.gd
+        --retries 3
+        --repo kx-builds-bionic
+        --series bionic
+        build-bionic/*.deb
+    retry:
+      automatic: true
+    plugins:
+      artifacts#v1.2.0:
+        download:
+          - "build-bionic/*.deb"
+          - "build-focal/*.deb"
+      docker#v1.4.0:
+        image: "${ECR}/ci-tools"
+        always-pull: true
+        workdir: /src
+        environment:
+          - APTLY_UNAME
+          - APTLY_PASSWD
